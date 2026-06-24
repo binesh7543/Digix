@@ -1,0 +1,52 @@
+{
+  "patterns": [
+    {
+      "id": "missing_import",
+      "name": "Missing Import Error",
+      "error_pattern": "Cannot find module|Cannot find package|Module not found",
+      "description": "Detects missing import/module errors",
+      "fix_action": {
+        "type": "prepend",
+        "code": "import { Hono } from 'hono';\n"
+      }
+    },
+    {
+      "id": "syntax_error_unexpected_token",
+      "name": "Syntax Error - Unexpected Token",
+      "error_pattern": "SyntaxError: Unexpected token|Unexpected token",
+      "description": "Detects syntax errors",
+      "fix_action": {
+        "type": "regex_replace",
+        "search": "(const|let|var)\\s+(\\w+)\\s*=\\s*new\\s+Hono\\(\\)\\s*$",
+        "replace": "$1 $2 = new Hono();"
+      }
+    },
+    {
+      "id": "undefined_variable",
+      "name": "Undefined Variable Error",
+      "error_pattern": "ReferenceError: (\\w+) is not defined|is not defined",
+      "description": "Detects undefined variable references",
+      "fix_action": {
+        "type": "regex_replace",
+        "search": "(\\w+)\\s*is not defined",
+        "replace": "let $1; // Auto-fixed"
+      }
+    },
+    {
+      "id": "missing_export_default",
+      "name": "Missing Default Export",
+      "error_pattern": "No default export|does not provide an export named 'default'",
+      "description": "Detects missing default export",
+      "fix_action": {
+        "type": "append",
+        "code": "\nexport default app;\n"
+      }
+    }
+  ],
+  "config": {
+    "target_file": "src/index.js",
+    "error_log": "error_log.txt",
+    "backup_enabled": true,
+    "backup_suffix": ".backup"
+  }
+}
