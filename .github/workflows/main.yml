@@ -19,6 +19,9 @@ jobs:
         continue-on-error: true
         run: node validator.js src/index.js error_log.txt
 
+      - name: Create empty error log if not exists
+        run: touch error_log.txt
+
       - name: Run Healer (Surgeon)
         if: steps.validator.outcome == 'failure'
         run: node scripts/healer.js error_log.txt src/index.js
