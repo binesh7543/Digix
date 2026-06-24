@@ -1,0 +1,29 @@
+name: Self-Healing Pipeline
+
+on: [push]
+
+jobs:
+  test-and-heal:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run Validator (Gatekeeper)
+        id: validator
+        continue-on-error: true
+        run: node validator.js src/index.js error_log.txt
+
+      - name: Run Healer (Surgeon)
+        if: steps.validator.outcome == 'failure'
+        run: node scripts/healer.js error_log.txt src/index.js
+
+      - name: Final Build Check
+        if: steps.validator.outcome == 'failure'
+        run: node validator.js src/index.js error_log.txt
+        
