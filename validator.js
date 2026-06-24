@@ -1,45 +1,32 @@
 #!/usr/bin/env node
 const fs = require('fs');
-const path = require('path');
 const vm = require('vm');
 
-const DEFAULT_TARGET_FILE = 'src/index.js';
-const DEFAULT_ERROR_LOG = 'error_log.txt';
+const targetFilePath = 'src/index.js';
+const errorLogPath = 'error_log.txt';
 
-function log(message, type = 'info') {
-  const prefix = { info: 'ℹ️', success: '✅', error: '❌', scan: '🔍' }[type] || 'ℹ️';
-  console.log(`${prefix} ${message}`);
-}
-
-function main() {
-  const targetFilePath = process.argv[2] || DEFAULT_TARGET_FILE;
-  const errorLogPath = process.argv[3] || DEFAULT_ERROR_LOG;
-
-  try {
-    const code = fs.readFileSync(targetFilePath, 'utf-8');
-    log('Scanning for errors...', 'scan');
-
-    const errors = [];
-    try {
-      new vm.Script(code);
-    } catch (e) {
-      errors.push(`SyntaxError: ${e.message}`);
-    }
-
-    if (errors.length > 0) {
-      fs.writeFileSync(errorLogPath, errors.join('\n'));
-      log(`Found ${errors.length} issues. Logged to ${errorLogPath}`, 'error');
-      process.exit(1);
-    } else {
-      fs.writeFileSync(errorLogPath, '');
-      log('Code is clean!', 'success');
-      process.exit(0);
-    }
-  } catch (error) {
-    log(`Fatal error: ${error.message}`, 'error');
-    process.exit(1);
+try {
+  const code = fs.readFileSync(targetFilePath, 'utf-8');
+  
+  // 1. सिंटैक्स चेक
+  new vm.Script(code);
+  
+  // 2. इंपोर्ट चेक (क्या Hono इम्पोर्ट है?)
+  if (!code.includes('import { Hono }')) {
+    throw new Error('Cannot find module: Missing Hono import');
   }
+
+  // 3. एक्सपोर्ट चेक
+  if (!code.includes('export default app')) {
+    throw new Error('No default export: Missing export default app');
+  }
+
+  console.log('✅ सब सही है!');
+  fs.writeFileSync(errorLogPath, ''); // फाइल खाली कर दो
+  process.exit(0);
+
+} catch (e) {
+  console.log('❌ एरर मिला: ' + e.message);
+  fs.writeFileSync(errorLogPath, e.message); // एरर को फाइल में लिखो
+  process.exit(1);
 }
-
-main();
-
